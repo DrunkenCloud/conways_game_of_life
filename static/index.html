@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conway's Game of Life</title>
+    <script src="https://unpkg.com/htmx.org@1.6.1"></script>
+    <style>
+        .cell {
+            width: 10px;
+            height: 10px;
+            display: inline-block;
+            margin: 0;
+            padding: 0;
+        }
+        .alive {
+            background-color: black;
+        }
+        .grid-row {
+            line-height: 0; /* Removes the gap between inline-block elements */
+        }
+        #grid {
+            font-size: 0; /* Removes the gap between inline-block elements */
+        }
+    </style>
+</head>
+<body>
+    <div id="grid" hx-get="/grid" hx-trigger="load"></div>
+    <button id="playPauseButton" onclick="togglePlayPause()">Play</button>
+    <script>
+        let intervalId = null;
+
+        function togglePlayPause() {
+            const button = document.getElementById('playPauseButton');
+            if (intervalId) {
+                clearInterval(intervalId);
+                intervalId = null;
+                button.innerText = 'Play';
+            } else {
+                intervalId = setInterval(() => {
+                    htmx.ajax('GET', '/step', { target: '#grid' });
+                }, 50);
+                button.innerText = 'Pause';
+            }
+        }
+    </script>
+</body>
+</html>
