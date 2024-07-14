@@ -18,15 +18,23 @@
         }
         .grid-row {
             line-height: 0;
+            white-space: nowrap;
         }
         #grid {
             font-size: 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-content: center;
+            width: 99vw;
+            height: 96vh;
+            overflow: hidden;
         }
     </style>
 </head>
 <body>
-    <div id="grid" hx-get="/grid" hx-trigger="load"></div>
-    <button id="playPauseButton" onclick="togglePlayPause()">Play</button>
+	<button id="playPauseButton" onclick="togglePlayPause()">Play</button>
+    <div id="grid"></div>
     <script>
         let intervalId = null;
 
@@ -39,10 +47,27 @@
             } else {
                 intervalId = setInterval(() => {
                     htmx.ajax('GET', '/step', { target: '#grid' });
-                }, 50);
+                }, 10);
                 button.innerText = 'Pause';
             }
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const width = Math.floor(window.innerWidth / 10);
+            const height = Math.floor(window.innerHeight / 10);
+
+            fetch('/initialize', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ width, height }),
+            })
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('grid').innerHTML = html;
+            });
+        });
     </script>
 </body>
 </html>

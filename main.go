@@ -1,6 +1,7 @@
 package main
 
 import (
+    "encoding/json"
     "fmt"
     "math/rand"
     "net/http"
@@ -8,32 +9,46 @@ import (
     "time"
 )
 
-const (
-    width  = 200
-    height = 100
-)
-
 var (
-    grid       [height][width]bool
-    gridMutex  sync.Mutex
+    grid      [][]bool
+    width     int
+    height    int
+    gridMutex sync.Mutex
 )
 
 func main() {
     rand.Seed(time.Now().UnixNano())
-    initializeGrid()
 
     fs := http.FileServer(http.Dir("./static"))
     http.Handle("/", fs)
 
     http.HandleFunc("/step", stepHandler)
     http.HandleFunc("/grid", gridHandler)
+    http.HandleFunc("/initialize", initializeHandler)
 
     fmt.Println("Starting server at :8080")
     http.ListenAndServe(":8080", nil)
 }
 
+func initializeHandler(w http.ResponseWriter, r *http.Request) {
+    var dimensions struct {
+        Width  int `json:"width"`
+        Height int `json:"height"`
+    }
+    if err := json.NewDecoder(r.Body).Decode(&dimensions); err != nil {
+        http.Error(w, err.Error(), http.StatusBadRequest)
+        return
+    }
+    width = dimensions.Width
+    height = dimensions.Height
+    initializeGrid()
+    renderGrid(w)
+}
+
 func initializeGrid() {
+    grid = make([][]bool, height)
     for y := 0; y < height; y++ {
+        grid[y] = make([]bool, width)
         for x := 0; x < width; x++ {
             grid[y][x] = rand.Float64() < 0.2
         }
@@ -44,9 +59,9 @@ func stepHandler(w http.ResponseWriter, r *http.Request) {
     gridMutex.Lock()
     defer gridMutex.Unlock()
 
-    nextGrid := [height][width]bool{}
-
+    nextGrid := make([][]bool, height)
     for y := 0; y < height; y++ {
+        nextGrid[y] = make([]bool, width)
         for x := 0; x < width; x++ {
             aliveNeighbours := countAliveNeighbors(x, y)
             if grid[y][x] && aliveNeighbours < 2 {
@@ -89,7 +104,6 @@ func renderGrid(w http.ResponseWriter) {
     }
     fmt.Fprintf(w, "</div>")
 }
-
 
 func countAliveNeighbors(x, y int) int {
     count := 0
