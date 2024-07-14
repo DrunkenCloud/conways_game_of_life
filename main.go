@@ -26,7 +26,7 @@ func main() {
     http.Handle("/", fs)
 
     http.HandleFunc("/step", stepHandler)
-    http.HandleFunc("/grid", gridHandler) // Handler for the initial grid
+    http.HandleFunc("/grid", gridHandler)
 
     fmt.Println("Starting server at :8080")
     http.ListenAndServe(":8080", nil)
@@ -35,7 +35,7 @@ func main() {
 func initializeGrid() {
     for y := 0; y < height; y++ {
         for x := 0; x < width; x++ {
-            grid[y][x] = rand.Float64() < 0.2 // 20% chance of being alive
+            grid[y][x] = rand.Float64() < 0.2
         }
     }
 }
